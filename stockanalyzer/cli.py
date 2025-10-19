@@ -10,7 +10,7 @@ from __future__ import annotations
 import argparse
 import logging
 
-from stockanalyzer import dividends, metrics, risk
+from stockanalyzer import dividends, metrics, risk, technical
 from stockanalyzer.data_fetcher import DataFetcher
 
 log = logging.getLogger(__name__)
@@ -75,6 +75,22 @@ def cmd_compare(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_technical(args: argparse.Namespace) -> int:
+    fetcher = DataFetcher()
+    prices = fetcher.get_close_prices(args.ticker, period=args.period)
+
+    latest_rsi = technical.rsi(prices).iloc[-1]
+    macd_df = technical.macd(prices)
+    latest_macd = macd_df.iloc[-1]
+
+    print(f"{args.ticker} technical snapshot")
+    print(f"  SMA 20:  {technical.sma(prices, 20).iloc[-1]:.2f}")
+    print(f"  SMA 50:  {technical.sma(prices, 50).iloc[-1]:.2f}")
+    print(f"  RSI 14:  {latest_rsi:.1f}")
+    print(f"  MACD:    {latest_macd['macd']:.3f}  signal: {latest_macd['signal']:.3f}  hist: {latest_macd['histogram']:.3f}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Evaluate stocks by risk, return, and dividends.")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -90,6 +106,11 @@ def build_parser() -> argparse.ArgumentParser:
     compare.add_argument("--benchmark", default="SPY")
     compare.add_argument("--period", default="1y")
     compare.set_defaults(func=cmd_compare)
+
+    tech = subparsers.add_parser("technical", help="Show SMA/RSI/MACD snapshot for a ticker")
+    tech.add_argument("ticker")
+    tech.add_argument("--period", default="6mo")
+    tech.set_defaults(func=cmd_technical)
 
     return parser
 
