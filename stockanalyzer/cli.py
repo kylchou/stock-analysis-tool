@@ -10,7 +10,7 @@ from __future__ import annotations
 import argparse
 import logging
 
-from stockanalyzer import dividends, metrics, risk, technical
+from stockanalyzer import dividends, metrics, portfolio, risk, technical
 from stockanalyzer.data_fetcher import DataFetcher
 
 log = logging.getLogger(__name__)
@@ -75,6 +75,25 @@ def cmd_compare(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_portfolio(args: argparse.Namespace) -> int:
+    holdings = portfolio.load_holdings_csv(args.csv_path)
+    fetcher = DataFetcher()
+
+    current_prices = {ticker: float(fetcher.get_close_prices(ticker, period="5d").iloc[-1]) for ticker in holdings}
+    value = portfolio.portfolio_value(holdings, current_prices)
+    weights = portfolio.portfolio_weights(holdings, current_prices)
+
+    print(f"Total portfolio value: ${value:,.2f}\n")
+    for ticker, weight in sorted(weights.items(), key=lambda kv: kv[1], reverse=True):
+        print(f"  {ticker:>6}  {weight * 100:5.1f}%  ({holdings[ticker]} shares @ ${current_prices[ticker]:.2f})")
+
+    price_histories = {ticker: fetcher.get_close_prices(ticker, period=args.period) for ticker in holdings}
+    corr = portfolio.correlation_matrix(price_histories)
+    print("\nReturn correlation matrix:")
+    print(corr.round(2))
+    return 0
+
+
 def cmd_technical(args: argparse.Namespace) -> int:
     fetcher = DataFetcher()
     prices = fetcher.get_close_prices(args.ticker, period=args.period)
@@ -106,6 +125,11 @@ def build_parser() -> argparse.ArgumentParser:
     compare.add_argument("--benchmark", default="SPY")
     compare.add_argument("--period", default="1y")
     compare.set_defaults(func=cmd_compare)
+
+    port = subparsers.add_parser("portfolio", help="Analyze a portfolio from a ticker,shares CSV")
+    port.add_argument("csv_path")
+    port.add_argument("--period", default="1y")
+    port.set_defaults(func=cmd_portfolio)
 
     tech = subparsers.add_parser("technical", help="Show SMA/RSI/MACD snapshot for a ticker")
     tech.add_argument("ticker")
