@@ -10,7 +10,7 @@ from __future__ import annotations
 import argparse
 import logging
 
-from stockanalyzer import dividends, metrics, portfolio, risk, technical
+from stockanalyzer import dividends, metrics, monte_carlo, portfolio, risk, technical
 from stockanalyzer.data_fetcher import DataFetcher
 
 log = logging.getLogger(__name__)
@@ -94,6 +94,26 @@ def cmd_portfolio(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_simulate(args: argparse.Namespace) -> int:
+    fetcher = DataFetcher()
+    prices = fetcher.get_close_prices(args.ticker, period=args.period)
+    mu = metrics.annualized_return(prices)
+    sigma = metrics.annualized_volatility(prices)
+    current_price = float(prices.iloc[-1])
+
+    paths = monte_carlo.simulate_gbm(
+        current_price, mu, sigma, days=args.days, simulations=args.simulations, seed=args.seed
+    )
+    summary = monte_carlo.summarize_simulation(paths)
+
+    print(f"{args.ticker} Monte Carlo simulation ({args.simulations} runs, {args.days} trading days)")
+    print(f"  current price:      ${current_price:.2f}")
+    print(f"  estimated mu/sigma: {mu:.2%} / {sigma:.2%} (annualized, from trailing {args.period})")
+    for key, value in summary.items():
+        print(f"  {key:>17}: {value:.2f}" if key != "prob_above_start" else f"  {key:>17}: {value:.1%}")
+    return 0
+
+
 def cmd_technical(args: argparse.Namespace) -> int:
     fetcher = DataFetcher()
     prices = fetcher.get_close_prices(args.ticker, period=args.period)
@@ -130,6 +150,14 @@ def build_parser() -> argparse.ArgumentParser:
     port.add_argument("csv_path")
     port.add_argument("--period", default="1y")
     port.set_defaults(func=cmd_portfolio)
+
+    sim = subparsers.add_parser("simulate", help="Monte Carlo simulate future prices")
+    sim.add_argument("ticker")
+    sim.add_argument("--period", default="2y", help="History window used to estimate drift/volatility")
+    sim.add_argument("--days", type=int, default=252)
+    sim.add_argument("--simulations", type=int, default=1000)
+    sim.add_argument("--seed", type=int, default=None)
+    sim.set_defaults(func=cmd_simulate)
 
     tech = subparsers.add_parser("technical", help="Show SMA/RSI/MACD snapshot for a ticker")
     tech.add_argument("ticker")
