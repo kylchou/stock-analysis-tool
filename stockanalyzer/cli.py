@@ -10,7 +10,7 @@ from __future__ import annotations
 import argparse
 import logging
 
-from stockanalyzer import dividends, metrics, monte_carlo, portfolio, risk, technical
+from stockanalyzer import dividends, metrics, monte_carlo, portfolio, report, risk, technical
 from stockanalyzer.data_fetcher import DataFetcher
 
 log = logging.getLogger(__name__)
@@ -62,6 +62,13 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     result = _analyze_one(fetcher, args.ticker, args.benchmark, args.period)
     for key, value in result.items():
         print(f"{key}: {value}")
+
+    if args.report:
+        if args.report.endswith(".csv"):
+            report.to_csv([result], args.report)
+        else:
+            report.to_html([result], args.report, title=f"{args.ticker} Analysis")
+        print(f"\nReport written to {args.report}")
     return 0
 
 
@@ -72,6 +79,13 @@ def cmd_compare(args: argparse.Namespace) -> int:
 
     for row in rows:
         print(f"{row['ticker']:>6}  score={row['risk_score']:>5}  {row['risk_label']}")
+
+    if args.report:
+        if args.report.endswith(".csv"):
+            report.to_csv(rows, args.report)
+        else:
+            report.to_html(rows, args.report, title="Stock Comparison")
+        print(f"\nReport written to {args.report}")
     return 0
 
 
@@ -138,12 +152,14 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("ticker")
     analyze.add_argument("--benchmark", default="SPY", help="Benchmark ticker for beta (default: SPY)")
     analyze.add_argument("--period", default="1y")
+    analyze.add_argument("--report", help="Write a .csv or .html report to this path")
     analyze.set_defaults(func=cmd_analyze)
 
     compare = subparsers.add_parser("compare", help="Compare multiple tickers, ranked by risk score")
     compare.add_argument("tickers", nargs="+")
     compare.add_argument("--benchmark", default="SPY")
     compare.add_argument("--period", default="1y")
+    compare.add_argument("--report", help="Write a .csv or .html report to this path")
     compare.set_defaults(func=cmd_compare)
 
     port = subparsers.add_parser("portfolio", help="Analyze a portfolio from a ticker,shares CSV")
