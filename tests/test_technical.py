@@ -36,6 +36,18 @@ def test_rsi_is_0_when_all_losses():
     assert result.iloc[-1] == pytest.approx(0.0)
 
 
+def test_rsi_is_50_for_completely_flat_prices():
+    prices = make_price_series([100.0] * 30)
+    result = technical.rsi(prices, window=14)
+    assert result.iloc[-1] == pytest.approx(50.0)
+
+
+def test_rsi_does_not_warn_on_divide_by_zero(recwarn):
+    prices = make_price_series(list(range(1, 30)))  # triggers avg_loss == 0
+    technical.rsi(prices, window=14)
+    assert not any("divide" in str(w.message) for w in recwarn.list)
+
+
 def test_macd_histogram_is_difference_of_macd_and_signal():
     prices = make_price_series([10 + i * 0.5 for i in range(60)])
     result = technical.macd(prices)
