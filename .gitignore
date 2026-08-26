@@ -5,4 +5,5 @@ venv/
 out/
 *.egg-info/
 .pytest_cache/
+.stockanalyzer_cache/
 .DS_Store
