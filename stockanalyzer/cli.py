@@ -128,6 +128,28 @@ def cmd_simulate(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_backtest(args: argparse.Namespace) -> int:
+    fetcher = DataFetcher()
+    prices = fetcher.get_close_prices(args.ticker, period=args.period)
+    result = monte_carlo.backtest(
+        prices,
+        horizon_days=args.horizon_days,
+        estimation_days=args.estimation_days,
+        simulations=args.simulations,
+        seed=args.seed,
+    )
+
+    print(f"{args.ticker} Monte Carlo backtest ({args.horizon_days} trading days, {args.simulations} runs)")
+    print(f"  price at start of window:  ${result['start_price']:.2f}")
+    print(f"  actual price {args.horizon_days} trading days later: ${result['actual_end_price']:.2f}")
+    print(f"  estimated mu/sigma used:   {result['estimated_mu']:.2%} / {result['estimated_sigma']:.2%}")
+    print(f"  simulated p5 / median / p95: ${result['p5']:.2f} / ${result['median']:.2f} / ${result['p95']:.2f}")
+    within = "yes" if result["within_p5_p95"] else "no -- actual landed outside the simulated range"
+    print(f"  actual price within the simulated 5-95% band: {within}")
+    print(f"  actual outcome's percentile within the simulation: {result['actual_percentile']:.0f}")
+    return 0
+
+
 def cmd_technical(args: argparse.Namespace) -> int:
     fetcher = DataFetcher()
     prices = fetcher.get_close_prices(args.ticker, period=args.period)
@@ -174,6 +196,22 @@ def build_parser() -> argparse.ArgumentParser:
     sim.add_argument("--simulations", type=int, default=1000)
     sim.add_argument("--seed", type=int, default=None)
     sim.set_defaults(func=cmd_simulate)
+
+    backtest = subparsers.add_parser(
+        "backtest", help="Check a past Monte Carlo simulation against what the price actually did"
+    )
+    backtest.add_argument("ticker")
+    backtest.add_argument("--period", default="3y", help="Total history to pull (default: 3y)")
+    backtest.add_argument("--horizon-days", type=int, default=252, help="Simulated window length, in trading days")
+    backtest.add_argument(
+        "--estimation-days",
+        type=int,
+        default=None,
+        help="Trailing window used to estimate drift/vol (default: everything before the horizon)",
+    )
+    backtest.add_argument("--simulations", type=int, default=1000)
+    backtest.add_argument("--seed", type=int, default=None)
+    backtest.set_defaults(func=cmd_backtest)
 
     tech = subparsers.add_parser("technical", help="Show SMA/RSI/MACD snapshot for a ticker")
     tech.add_argument("ticker")
