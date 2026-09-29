@@ -1,6 +1,3 @@
-"""Tests for DataFetcher's caching behavior, using a mocked yfinance.Ticker
-so these run with no network access.
-"""
 import os
 import time
 
@@ -44,7 +41,7 @@ def test_get_price_history_caches_by_ticker_period_interval(monkeypatch):
     fetcher.get_price_history("AAPL", period="1y", interval="1d")
     fetcher.get_price_history("AAPL", period="1y", interval="1d")
 
-    assert FakeTicker.call_count == 1  # second call should hit the cache
+    assert FakeTicker.call_count == 1
 
 
 def test_get_price_history_different_params_not_cached_together(monkeypatch):
@@ -87,10 +84,6 @@ def test_empty_price_history_raises_value_error(monkeypatch):
         fetcher.get_price_history("BADTICKER")
 
 
-# --- on-disk cache -----------------------------------------------------
-# The in-memory dict above only helps within a single process. These cover
-# the disk layer, which is what actually saves a refetch on the *next*
-# `python main.py ...` invocation.
 
 
 def test_disk_cache_survives_a_fresh_instance(tmp_path, monkeypatch):
@@ -99,8 +92,6 @@ def test_disk_cache_survives_a_fresh_instance(tmp_path, monkeypatch):
     DataFetcher(cache_dir=tmp_path).get_price_history("AAPL", period="1y", interval="1d")
     assert FakeTicker.call_count == 1
 
-    # A brand new instance -- like a new `python main.py` run -- should hit
-    # the file written by the one above instead of calling yfinance again.
     second = DataFetcher(cache_dir=tmp_path)
     second.get_price_history("AAPL", period="1y", interval="1d")
     assert FakeTicker.call_count == 1
@@ -114,13 +105,13 @@ def test_disk_cache_ignores_expired_entries(tmp_path, monkeypatch):
     assert FakeTicker.call_count == 1
 
     cache_file = next(tmp_path.iterdir())
-    stale_mtime = time.time() - 3600  # well past the 1-second TTL above
+    stale_mtime = time.time() - 3600
     os.utime(cache_file, (stale_mtime, stale_mtime))
 
     DataFetcher(cache_dir=tmp_path, cache_ttl_seconds=1).get_price_history(
         "AAPL", period="1y", interval="1d"
     )
-    assert FakeTicker.call_count == 2  # stale, so it should have refetched
+    assert FakeTicker.call_count == 2
 
 
 def test_disk_cache_none_disables_the_disk_layer(monkeypatch):

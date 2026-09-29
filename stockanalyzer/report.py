@@ -1,4 +1,3 @@
-"""Write analysis results out to CSV or a simple standalone HTML report."""
 from __future__ import annotations
 
 import csv

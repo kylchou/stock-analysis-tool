@@ -22,7 +22,6 @@ def test_annualized_return_flat_price_is_zero():
 
 
 def test_annualized_volatility_zero_for_constant_returns():
-    # Constant daily growth rate -> zero volatility.
     prices = make_price_series([100 * (1.001**i) for i in range(50)])
     vol = metrics.annualized_volatility(prices)
     assert vol == pytest.approx(0.0, abs=1e-6)
@@ -30,13 +29,12 @@ def test_annualized_volatility_zero_for_constant_returns():
 
 def test_sharpe_ratio_nan_when_volatility_zero():
     prices = make_price_series([100] * 10)
-    assert metrics.sharpe_ratio(prices) != metrics.sharpe_ratio(prices)  # NaN != NaN
+    assert metrics.sharpe_ratio(prices) != metrics.sharpe_ratio(prices)
 
 
 def test_max_drawdown_detects_peak_to_trough():
     prices = make_price_series([100, 120, 90, 95, 130])
     dd = metrics.max_drawdown(prices)
-    # Peak of 120 down to trough of 90 -> -25%
     assert dd == pytest.approx(-0.25, rel=1e-6)
 
 

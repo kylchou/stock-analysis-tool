@@ -28,7 +28,7 @@ def test_portfolio_weights_zero_value_returns_zeros():
 def test_correlation_matrix_perfectly_correlated_series():
     dates = pd.date_range("2024-01-01", periods=10, freq="D")
     base = pd.Series(range(10), index=dates, dtype=float) + 100
-    price_histories = {"A": base, "B": base * 2}  # B moves in lockstep with A
+    price_histories = {"A": base, "B": base * 2}
     corr = portfolio.correlation_matrix(price_histories)
     assert corr.loc["A", "B"] == pytest.approx(1.0, rel=1e-6)
 

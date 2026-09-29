@@ -1,4 +1,3 @@
-"""Portfolio-level aggregation: value, weights, and cross-holding correlation."""
 from __future__ import annotations
 
 import pandas as pd
@@ -30,6 +29,5 @@ def portfolio_weights(holdings: dict[str, float], current_prices: dict[str, floa
 
 
 def load_holdings_csv(path: str) -> dict[str, float]:
-    """Reads a CSV with columns 'ticker,shares' into a {ticker: shares} dict."""
     df = pd.read_csv(path)
     return dict(zip(df["ticker"], df["shares"]))

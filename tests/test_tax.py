@@ -17,7 +17,7 @@ def test_estimate_tax_short_term_uses_ordinary_bracket():
         sale_date=date(2024, 6, 1),
     )
     assert result["long_term"] is False
-    assert result["marginal_rate"] == 0.12  # 45,000 falls in the 12% bracket
+    assert result["marginal_rate"] == 0.12
     assert result["estimated_tax"] == 600.0
 
 
@@ -29,7 +29,7 @@ def test_estimate_tax_long_term_uses_ltcg_bracket():
         sale_date=date(2024, 6, 1),
     )
     assert result["long_term"] is True
-    assert result["marginal_rate"] == 0.15  # 45,000 falls in the 15% LTCG bracket
+    assert result["marginal_rate"] == 0.15
     assert result["estimated_tax"] == 750.0
 
 

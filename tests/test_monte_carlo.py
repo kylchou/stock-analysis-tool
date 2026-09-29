@@ -19,7 +19,6 @@ def test_simulate_gbm_is_reproducible_with_seed():
 
 def test_zero_volatility_gives_deterministic_growth():
     paths = monte_carlo.simulate_gbm(100.0, mu=0.0, sigma=0.0, days=252, simulations=5, seed=1)
-    # With zero drift and zero vol, price should stay flat.
     assert np.allclose(paths[-1], 100.0)
 
 
@@ -68,10 +67,6 @@ def test_backtest_returns_expected_keys_and_ranges():
 
 
 def test_backtest_estimation_days_narrows_the_window():
-    # Flat for the first stretch, then a clean upward trend -- a short
-    # trailing window right before the split sees only the trend, so its
-    # estimated drift should come out well above the full-history estimate,
-    # which gets diluted by all the flat history before it.
     flat = np.full(400, 100.0)
     trending = 100 * (1.002 ** np.arange(1, 200))
     dates = pd.date_range("2020-01-01", periods=len(flat) + len(trending), freq="B")
@@ -84,5 +79,4 @@ def test_backtest_estimation_days_narrows_the_window():
     )
 
     assert short_window["estimated_mu"] > full_window["estimated_mu"]
-    # Both should still be estimating from the same point (same start price).
     assert short_window["start_price"] == full_window["start_price"]

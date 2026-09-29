@@ -1,10 +1,3 @@
-"""Command-line interface tying the metrics/dividends/risk modules together.
-
-Examples:
-    python main.py analyze AAPL
-    python main.py analyze AAPL --benchmark SPY
-    python main.py compare AAPL MSFT GOOGL
-"""
 from __future__ import annotations
 
 import argparse

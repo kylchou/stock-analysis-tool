@@ -1,7 +1,3 @@
-"""Core return/risk metrics computed from a price series. Pure functions over
-pandas Series so they're easy to unit test with synthetic data -- no network
-calls in here.
-"""
 from __future__ import annotations
 
 import numpy as np

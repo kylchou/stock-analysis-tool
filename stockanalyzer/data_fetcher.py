@@ -1,7 +1,3 @@
-"""Thin wrapper around yfinance so the rest of the codebase never imports it
-directly -- makes it easy to mock out network calls in tests, and gives us
-one place to add caching.
-"""
 from __future__ import annotations
 
 import hashlib
@@ -15,12 +11,6 @@ import yfinance as yf
 
 log = logging.getLogger(__name__)
 
-# Price history for a given ticker/period/interval doesn't change until the
-# next trading day closes, and yfinance rate-limits if you lean on it too
-# hard -- so a same-day rerun of `compare`/`portfolio` (easy to do, e.g. you
-# and someone else both poking at it the same afternoon) shouldn't have to
-# refetch everything from scratch. 24h is generous on purpose: worst case
-# you're a day stale, which doesn't matter for anything here.
 DEFAULT_CACHE_DIR = Path(".stockanalyzer_cache")
 DEFAULT_CACHE_TTL_SECONDS = 24 * 60 * 60
 
@@ -33,10 +23,7 @@ class DataFetcher:
     ):
         self._price_cache: dict[tuple, pd.DataFrame] = {}
         self._info_cache: dict[str, dict] = {}
-        # cache_dir=None disables the on-disk layer entirely (tests use
-        # this so pytest never leaves cache files scattered around) --
-        # the in-memory dicts above still dedupe repeat calls within a
-        # single run either way.
+        # cache_dir=None turns off the disk cache
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.cache_ttl_seconds = cache_ttl_seconds
         if self.cache_dir:

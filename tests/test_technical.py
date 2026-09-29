@@ -12,8 +12,8 @@ def make_price_series(values):
 def test_sma_matches_manual_average():
     prices = make_price_series([1, 2, 3, 4, 5])
     result = technical.sma(prices, window=3)
-    assert result.iloc[2] == pytest.approx(2.0)  # avg(1,2,3)
-    assert result.iloc[4] == pytest.approx(4.0)  # avg(3,4,5)
+    assert result.iloc[2] == pytest.approx(2.0)
+    assert result.iloc[4] == pytest.approx(4.0)
     assert result.iloc[:2].isna().all()
 
 
@@ -25,13 +25,13 @@ def test_ema_reacts_faster_than_sma_to_a_jump():
 
 
 def test_rsi_is_100_when_all_gains():
-    prices = make_price_series(list(range(1, 30)))  # strictly increasing
+    prices = make_price_series(list(range(1, 30)))
     result = technical.rsi(prices, window=14)
     assert result.iloc[-1] == pytest.approx(100.0)
 
 
 def test_rsi_is_0_when_all_losses():
-    prices = make_price_series(list(range(30, 1, -1)))  # strictly decreasing
+    prices = make_price_series(list(range(30, 1, -1)))
     result = technical.rsi(prices, window=14)
     assert result.iloc[-1] == pytest.approx(0.0)
 
@@ -43,7 +43,7 @@ def test_rsi_is_50_for_completely_flat_prices():
 
 
 def test_rsi_does_not_warn_on_divide_by_zero(recwarn):
-    prices = make_price_series(list(range(1, 30)))  # triggers avg_loss == 0
+    prices = make_price_series(list(range(1, 30)))
     technical.rsi(prices, window=14)
     assert not any("divide" in str(w.message) for w in recwarn.list)
 

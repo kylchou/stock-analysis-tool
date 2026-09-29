@@ -1,6 +1,3 @@
-"""Matplotlib charts. Every function saves a PNG instead of calling plt.show()
-so this works fine headless (CI, cron jobs, etc.).
-"""
 from __future__ import annotations
 
 import matplotlib
